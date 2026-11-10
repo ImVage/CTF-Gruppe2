@@ -1,7 +1,12 @@
 name: Terraform deployment
 
 on:
-  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -21,12 +26,21 @@ jobs:
       - name: Initialize Terraform
         run: terraform init -input=false
 
-      - name: Plan Terraform deployment
+      - name: Plan Terraform deployment (Development)
+        if: github.event_name == 'pull_request'
         env:
           # Reference mock-credentials to make Terraform's Google-Provider not complain about missing
           # credentials for the plan. They are not required, since tf-apply never runs.
           GOOGLE_APPLICATION_CREDENTIALS: .github/workflows/mock-credentials.json
-        run: terraform plan -input=false -out=local.tfplan -var-file=configuration/sample.tfvars.json
+        run: terraform plan -input=false -out=local.tfplan -var-file=configuration/dev.tfvars.json
+
+      - name: Plan Terraform deployment (Production)
+        if: github.event_name == 'push'
+        env:
+          # Reference mock-credentials to make Terraform's Google-Provider not complain about missing
+          # credentials for the plan. They are not required, since tf-apply never runs.
+          GOOGLE_APPLICATION_CREDENTIALS: .github/workflows/mock-credentials.json
+        run: terraform plan -input=false -out=local.tfplan -var-file=configuration/prod.tfvars.json
 
       # Pretty print the changes to the Terraform Outputs directly into the GitHub Workflow Annotations for convenience
       - name: Annotate Terraform output changes
