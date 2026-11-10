@@ -12,7 +12,7 @@ resource "google_compute_instance" "application" {
   count = var.replicas
 
   name         = "application-${count.index + 1}"
-  machine_type = "e2-micro"
+  machine_type = "e2-small"
   zone         = "${var.location}-b"
 
   boot_disk {
